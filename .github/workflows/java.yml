@@ -1,0 +1,126 @@
+# This workflow builds and runs relevant checks for 
+name: "Java build workflow"
+
+on:
+  workflow_call:
+    inputs:
+      java_version:
+        description: "Java version to use"
+        type: string
+        required: false
+        default: "21"
+      java_distribution:
+        description: "JDK distribution to use"
+        type: string
+        required: false
+        default: "corretto"
+      lint_openapi:
+        description: "Run linter for OpenAPI definition"
+        type: boolean
+        required: false
+        default: true
+      lint_cloudformation:
+        description: "Run linter for CloudFormation template"
+        type: boolean
+        required: false
+        default: true
+      cloudformation_template:
+        description: "Name of CloudFormation template file"
+        type: string
+        required: false
+        default: "template.yaml"
+
+    secrets:
+      codacy_token:
+        description: "Access token for Codacy"
+        required: true
+
+jobs:
+  cloudformation-linter:
+    name: CloudFormation linting
+    runs-on: ubuntu-latest
+    if: inputs.lint_cloudformation == true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup CloudFormation Linter
+        uses: scottbrenner/cfn-lint-action@v2
+
+      - name: Run CloudFormation linter
+        run: |
+          cfn-lint --version
+          cfn-lint -t ${{ inputs.cloudformation_template }} --info
+
+  openapi-linting:
+    name: OpenAPI linting
+    runs-on: ubuntu-latest
+    if: inputs.lint_openapi == true
+    services:
+      swagger-editor:
+        image: swaggerapi/swagger-editor
+        ports:
+          - 80:8080
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate OpenAPI definition
+        uses: char0n/swagger-editor-validate@v1
+        with:
+          swagger-editor-url: http://localhost/
+          definition-file: docs/openapi.yaml
+
+  dependency-submission:
+    name: Dependency graph
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout project sources
+        uses: actions/checkout@v4
+
+      - name: Generate and submit dependency graph
+        uses: gradle/actions/dependency-submission@v4
+        with:
+          build-scan-publish: true
+          build-scan-terms-of-use-url: "https://gradle.com/terms-of-service"
+          build-scan-terms-of-use-agree: "yes"
+
+  build:
+    name: Gradle build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ inputs.java_version }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ inputs.java_version }}
+          distribution: ${{ inputs.java_distribution }}
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Cache Gradle packages
+        id: cache-gradle
+        uses: actions/cache@v4
+        with:
+          path: ~/.gradle/caches
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
+          restore-keys: ${{ runner.os }}-gradle
+
+      - name: Log cache hit/miss
+        run: echo 'Gradle cache hit=${{ steps.cache-gradle.outputs.cache-hit  }}'
+
+      - name: Build with Gradle
+        run: ./gradlew build --info
+
+      - name: Publish test results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always()
+        with:
+          files: "**/build/test-results/**/*.xml"
+
+      - name: Codacy Coverage Reporter
+        uses: codacy/codacy-coverage-reporter-action@v1
+        with:
+          project-token: ${{ secrets.codacy_token }}
+          coverage-reports: $(pwd)/build/reports/jacoco/testCodeCoverageReport/testCodeCoverageReport.xml
