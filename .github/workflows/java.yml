@@ -84,6 +84,12 @@ jobs:
       - name: Checkout project sources
         uses: actions/checkout@v4
 
+      - name: Set up JDK ${{ inputs.java_version }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ inputs.java_version }}
+          distribution: ${{ inputs.java_distribution }}
+
       - name: Generate and submit dependency graph
         uses: gradle/actions/dependency-submission@v4
         with:
