@@ -34,6 +34,11 @@ on:
         type: string
         required: false
         default: "template.yaml"
+      code_coverage_report_path:
+        description: "Path to the code coverage report file"
+        type: string
+        required: false
+        default: "build/reports/jacoco/testCodeCoverageReport/testCodeCoverageReport.xml"
 
     secrets:
       codacy_token:
@@ -130,4 +135,4 @@ jobs:
         uses: codacy/codacy-coverage-reporter-action@v1
         with:
           project-token: ${{ secrets.codacy_token }}
-          coverage-reports: $(pwd)/build/reports/jacoco/testCodeCoverageReport/testCodeCoverageReport.xml
+          coverage-reports: $(pwd)/${{ inputs.code_coverage_report_path }}
