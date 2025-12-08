@@ -1,4 +1,4 @@
-# This workflow builds and runs relevant checks for 
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
 name: "Java build workflow"
 
 on:
