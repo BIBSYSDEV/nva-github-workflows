@@ -10,7 +10,50 @@ To add changes that would require changes in caller workflows, create a new bran
 
 ## Usage
 
-Example caller workflow:
+### v2 (recommended)
+
+```yml
+# Filename: .github/workflows/build.yml
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+jobs:
+  build:
+    uses: BIBSYSDEV/nva-github-workflows/.github/workflows/java.yml@v2
+    with:
+      openapi_files: "docs/openapi.yaml"
+    secrets:
+      codacy_token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+```
+
+OpenAPI linting uses [Spectral](https://github.com/stoplightio/spectral). Each repository must provide its own `.spectral.yaml` ruleset file.
+
+You can use the shared ruleset from this repository as a starting point:
+
+```bash
+# Run Spectral locally using the shared ruleset
+spectral lint docs/openapi.yaml --ruleset https://raw.githubusercontent.com/BIBSYSDEV/nva-github-workflows/v2/.spectral.yaml
+```
+
+Or extend it in your own `.spectral.yaml`:
+
+```yaml
+extends:
+  - https://raw.githubusercontent.com/BIBSYSDEV/nva-github-workflows/v2/.spectral.yaml
+```
+
+The `openapi_files` input accepts glob patterns:
+
+- Single file: `docs/openapi.yaml`
+- Multiple files: `docs/**/*.yaml`
+- Skip linting: omit the input or leave empty
+
+### v1 (legacy)
 
 ```yml
 # Filename: .github/workflows/build.yml

@@ -14,16 +14,11 @@ on:
         type: string
         required: false
         default: "corretto"
-      lint_openapi:
-        description: "Run linter for OpenAPI definition"
-        type: boolean
-        required: false
-        default: true
-      openapi_definition:
-        description: "Path to the OpenAPI definition file"
+      openapi_files:
+        description: "Glob pattern for OpenAPI files to lint (e.g., 'docs/*.yaml'). Leave empty to skip."
         type: string
         required: false
-        default: "docs/openapi.yaml"
+        default: ""
       lint_cloudformation:
         description: "Run linter for CloudFormation template"
         type: boolean
@@ -62,23 +57,17 @@ jobs:
           cfn-lint --version
           cfn-lint -t ${{ inputs.cloudformation_template }} --info
 
-  # openapi-linting:
-  #   name: OpenAPI linting
-  #   runs-on: ubuntu-latest
-  #   if: inputs.lint_openapi == true
-  #   services:
-  #     swagger-editor:
-  #       image: swaggerapi/swagger-editor
-  #       ports:
-  #         - 80:8080
+  openapi-linting:
+    name: OpenAPI linting
+    runs-on: ubuntu-latest
+    if: inputs.openapi_files != ''
+    steps:
+      - uses: actions/checkout@v4
 
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - name: Validate OpenAPI definition
-  #       uses: swaggerexpert/swagger-editor-validate@v1
-  #       with:
-  #         swagger-editor-url: http://localhost/
-  #         definition-file: ${{ inputs.openapi_definition }}
+      - name: Lint OpenAPI files with Spectral
+        uses: stoplightio/spectral-action@latest
+        with:
+          file_glob: ${{ inputs.openapi_files }}
 
   dependency-submission:
     name: Dependency graph
