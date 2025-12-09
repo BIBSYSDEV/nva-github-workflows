@@ -31,21 +31,10 @@ jobs:
       codacy_token: ${{ secrets.CODACY_PROJECT_TOKEN }}
 ```
 
-OpenAPI linting uses [Spectral](https://github.com/stoplightio/spectral). Each repository must provide its own `.spectral.yaml` ruleset file.
+OpenAPI linting uses [Spectral](https://github.com/stoplightio/spectral).
+Each repository must provide its own `.spectral.yaml` ruleset file.
+Use the provided [template](.spectral.yaml) and customize it as needed.
 
-You can use the shared ruleset from this repository as a starting point:
-
-```bash
-# Run Spectral locally using the shared ruleset
-spectral lint docs/openapi.yaml --ruleset https://raw.githubusercontent.com/BIBSYSDEV/nva-github-workflows/v2/.spectral.yaml
-```
-
-Or extend it in your own `.spectral.yaml`:
-
-```yaml
-extends:
-  - https://raw.githubusercontent.com/BIBSYSDEV/nva-github-workflows/v2/.spectral.yaml
-```
 
 The `openapi_files` input accepts glob patterns:
 
