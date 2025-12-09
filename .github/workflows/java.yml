@@ -64,10 +64,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Lint OpenAPI files with Spectral
-        uses: stoplightio/spectral-action@latest
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          file_glob: ${{ inputs.openapi_files }}
+          node-version: "22"
+
+      - name: Install Spectral
+        run: npm install -g @stoplight/spectral-cli
+
+      - name: Lint OpenAPI files
+        run: spectral lint '${{ inputs.openapi_files }}' --fail-severity=error
 
   dependency-submission:
     name: Dependency graph
