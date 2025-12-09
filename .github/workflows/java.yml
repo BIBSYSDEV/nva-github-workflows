@@ -3,6 +3,7 @@ name: "Java build workflow"
 permissions:
   contents: read
   checks: write
+  pull-requests: write
 
 on:
   workflow_call:
