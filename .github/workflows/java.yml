@@ -1,5 +1,9 @@
 # yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
 name: "Java build workflow"
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
 
 on:
   workflow_call:
@@ -14,16 +18,11 @@ on:
         type: string
         required: false
         default: "corretto"
-      lint_openapi:
-        description: "Run linter for OpenAPI definition"
-        type: boolean
-        required: false
-        default: true
-      openapi_definition:
-        description: "Path to the OpenAPI definition file"
+      openapi_files:
+        description: "Glob pattern for OpenAPI files to lint (e.g., 'docs/*.yaml'). Leave empty to skip."
         type: string
         required: false
-        default: "docs/openapi.yaml"
+        default: ""
       lint_cloudformation:
         description: "Run linter for CloudFormation template"
         type: boolean
@@ -51,8 +50,7 @@ jobs:
     runs-on: ubuntu-latest
     if: inputs.lint_cloudformation == true
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup CloudFormation Linter
         uses: scottbrenner/cfn-lint-action@v2
@@ -62,23 +60,21 @@ jobs:
           cfn-lint --version
           cfn-lint -t ${{ inputs.cloudformation_template }} --info
 
-  # openapi-linting:
-  #   name: OpenAPI linting
-  #   runs-on: ubuntu-latest
-  #   if: inputs.lint_openapi == true
-  #   services:
-  #     swagger-editor:
-  #       image: swaggerapi/swagger-editor
-  #       ports:
-  #         - 80:8080
+  openapi-linting:
+    name: OpenAPI linting
+    runs-on: ubuntu-latest
+    if: inputs.openapi_files != ''
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
 
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - name: Validate OpenAPI definition
-  #       uses: swaggerexpert/swagger-editor-validate@v1
-  #       with:
-  #         swagger-editor-url: http://localhost/
-  #         definition-file: ${{ inputs.openapi_definition }}
+      - name: Install Spectral
+        run: npm install -g @stoplight/spectral-cli
+
+      - name: Lint OpenAPI files
+        run: spectral lint '${{ inputs.openapi_files }}' --fail-severity=error
 
   dependency-submission:
     name: Dependency graph
@@ -86,11 +82,10 @@ jobs:
     if: github.ref_name == github.event.repository.default_branch
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout project sources
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Set up JDK ${{ inputs.java_version }}
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: ${{ inputs.java_version }}
           distribution: ${{ inputs.java_distribution }}
@@ -106,10 +101,10 @@ jobs:
     name: Gradle build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Set up JDK ${{ inputs.java_version }}
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: ${{ inputs.java_version }}
           distribution: ${{ inputs.java_distribution }}
@@ -132,7 +127,7 @@ jobs:
           files: "**/build/test-results/**/*.xml"
 
       - name: Codacy Coverage Reporter
-        uses: codacy/codacy-coverage-reporter-action@v1
+        uses: codacy/codacy-coverage-reporter-action@v1.3.0
         with:
           project-token: ${{ secrets.codacy_token }}
           coverage-reports: $(pwd)/${{ inputs.code_coverage_report_path }}
