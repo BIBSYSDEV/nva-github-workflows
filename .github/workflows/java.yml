@@ -1,9 +1,9 @@
 # yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
 name: "Java build workflow"
 permissions:
-  contents: read
-  checks: write
-  pull-requests: write
+  contents: write # To submit dependency graph
+  checks: write # To publish test results
+  pull-requests: write # To comment on PRs
 
 on:
   workflow_call:
