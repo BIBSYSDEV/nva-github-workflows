@@ -19,20 +19,20 @@ on:
         required: false
         default: "corretto"
       openapi_files:
-        description: "Glob pattern for OpenAPI files to lint (e.g., 'docs/*.yaml'). Leave empty to skip."
+        description: "Deprecated: Use 'lint_openapi' instead. Kept temporarily to avoid breaking callers."
         type: string
         required: false
         default: ""
+      lint_openapi:
+        description: "Run OpenAPI linter for files matching 'docs/**/*.yaml'"
+        type: boolean
+        required: false
+        default: true
       lint_cloudformation:
         description: "Run linter for CloudFormation template"
         type: boolean
         required: false
         default: true
-      cloudformation_template:
-        description: "Name of CloudFormation template file"
-        type: string
-        required: false
-        default: "template.yaml"
       code_coverage_report_path:
         description: "Path to the code coverage report file"
         type: string
@@ -58,12 +58,12 @@ jobs:
       - name: Run CloudFormation linter
         run: |
           cfn-lint --version
-          cfn-lint -t ${{ inputs.cloudformation_template }} --info
+          cfn-lint -t template.yaml --info
 
   openapi-linting:
     name: OpenAPI linting
     runs-on: ubuntu-latest
-    if: inputs.openapi_files != ''
+    if: inputs.lint_openapi == true
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
@@ -74,7 +74,7 @@ jobs:
         run: npm install -g @stoplight/spectral-cli
 
       - name: Lint OpenAPI files
-        run: spectral lint '${{ inputs.openapi_files }}' --fail-severity=error
+        run: spectral lint 'docs/**/*.yaml' --fail-severity=error
 
   dependency-submission:
     name: Dependency graph
