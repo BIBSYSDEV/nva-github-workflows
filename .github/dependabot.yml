@@ -1,0 +1,30 @@
+version: 2
+
+updates:
+  # Update GitHub Actions workflows
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+    cooldown:
+      default-days: 7
+
+  # Update Gradle dependencies (version catalogs + build plugins)
+  - package-ecosystem: "gradle"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+    cooldown:
+      default-days: 7
+    # Groups help reduce PR noise by batching related updates
+    groups:
+      patch-updates:
+        update-types:
+          - "patch"
+      minor-updates:
+        update-types:
+          - "minor"
