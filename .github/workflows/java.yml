@@ -19,12 +19,12 @@ on:
         required: false
         default: "corretto"
       openapi_files:
-        description: "Deprecated: Use 'lint_openapi' instead. Kept temporarily to avoid breaking callers."
+        description: "Deprecated and ignored. Kept to avoid breaking callers. Lint OpenAPI with nva.spectral in nva-gradle-plugins."
         type: string
         required: false
         default: ""
       lint_openapi:
-        description: "Run OpenAPI linter for files matching 'docs/**/*.yaml'"
+        description: "Deprecated and ignored. Kept to avoid breaking callers. Lint OpenAPI with nva.spectral in nva-gradle-plugins."
         type: boolean
         required: false
         default: true
@@ -61,22 +61,6 @@ jobs:
         run: |
           cfn-lint --version
           cfn-lint -t template.yaml --info
-
-  openapi-linting:
-    name: OpenAPI linting
-    runs-on: ubuntu-latest
-    if: inputs.lint_openapi == true
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version: 24
-
-      - name: Install Spectral
-        run: npm install -g @stoplight/spectral-cli
-
-      - name: Lint OpenAPI files
-        run: spectral lint 'docs/**/*.yaml' --fail-severity=error
 
   dependency-submission:
     name: Dependency graph

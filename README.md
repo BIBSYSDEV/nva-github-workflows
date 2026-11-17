@@ -30,22 +30,24 @@ permissions:
 jobs:
   build:
     uses: BIBSYSDEV/nva-github-workflows/.github/workflows/java.yml@v2
-    with:
-      openapi_files: "docs/openapi.yaml"
     secrets:
       codacy_token: ${{ secrets.CODACY_PROJECT_TOKEN }}
 ```
 
-OpenAPI linting uses [Spectral](https://github.com/stoplightio/spectral).
-Each repository must provide its own `.spectral.yaml` ruleset file.
-Use the provided [template](.spectral.yaml) and customize it as needed.
+This workflow does not lint OpenAPI documents.
+Lint them with [Spectral](https://github.com/stoplightio/spectral) in the Gradle build instead, through `nva.spectral` in [nva-gradle-plugins](https://github.com/BIBSYSDEV/nva-gradle-plugins#configuration):
 
+```groovy
+nva {
+    spectral {
+        documents = ['docs/*.yaml']
+        rulesetFile = file('.spectral.yaml') // optional, defaults to the ruleset bundled with nva-gradle-plugins
+    }
+}
+```
 
-The `openapi_files` input accepts glob patterns:
-
-- Single file: `docs/openapi.yaml`
-- Multiple files: `docs/**/*.yaml`
-- Skip linting: omit the input or leave empty
+The inputs `lint_openapi` and `openapi_files` are deprecated and ignored.
+They stay declared because a caller that passes an undeclared input fails, and will be removed once no caller passes them.
 
 ### v1 (legacy)
 
