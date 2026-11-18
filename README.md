@@ -49,6 +49,17 @@ nva {
 The inputs `lint_openapi` and `openapi_files` are deprecated and ignored.
 They stay declared because a caller that passes an undeclared input fails, and will be removed once no caller passes them.
 
+The CloudFormation linting job runs [cfn-lint](https://github.com/aws-cloudformation/cfn-lint) on `template.yaml` in the repository root.
+To lint other templates, list them under `templates` in a `.cfnlintrc.yaml` in the repository root:
+
+```yaml
+templates:
+  - infrastructure/*.yaml
+```
+
+Running `cfn-lint` locally in the repository root picks up the same file.
+Set `lint_cloudformation: false` to skip the job.
+
 ### v1 (legacy)
 
 ```yml
