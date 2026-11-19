@@ -29,7 +29,7 @@ on:
         required: false
         default: true
       lint_cloudformation:
-        description: "Run linter for CloudFormation template"
+        description: "Run cfn-lint on template.yaml, or on the templates listed in the repository's .cfnlintrc"
         type: boolean
         required: false
         default: true
@@ -57,10 +57,15 @@ jobs:
         with:
           version: "1.53.3"
 
+      # Other templates are listed in the caller's .cfnlintrc, not passed as an input, which CodeQL flags as code injection
       - name: Run CloudFormation linter
         run: |
           cfn-lint --version
-          cfn-lint -t template.yaml --info
+          if grep -qsE '^templates:' .cfnlintrc .cfnlintrc.yaml .cfnlintrc.yml; then
+            cfn-lint --info
+          else
+            cfn-lint -t template.yaml --info
+          fi
 
   dependency-submission:
     name: Dependency graph
